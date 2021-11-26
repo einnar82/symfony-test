@@ -3,7 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Post;
+use App\Form\PostType;
 use App\Repository\PostRepository;
+use Doctrine\ORM\OptimisticLockException;
+use Doctrine\ORM\ORMException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -32,15 +35,25 @@ class PostController extends AbstractController
      * @param Request $request
      * @param PostRepository $postRepository
      * @return Response
+     * @throws ORMException
      */
     public function create(Request $request, PostRepository $postRepository): Response
     {
-        $post = (new Post())->setTitle('sample title');
-        $entityManager = $postRepository->getEntityManager();
-        $entityManager->persist($post);
-        $entityManager->flush();
+        $post = new Post;
+        $form = $this->createForm(PostType::class, $post);
+        $form->handleRequest($request);
 
-        return new Response("Post was created.");
+        if ($form->isSubmitted() && $form->isValid()) {
+            $entityManager = $postRepository->getEntityManager();
+            $entityManager->persist($post);
+            $entityManager->flush();
+
+            return $this->redirectToRoute('post.index');
+        }
+
+        return $this->render('post/create.html.twig', [
+            'form' => $form->createView()
+        ]);
     }
 
     /**
@@ -56,4 +69,23 @@ class PostController extends AbstractController
            'post' => $post
         ]);
     }
+
+    /**
+     * @Route("/delete/{id}", name="delete")
+     * @param $id
+     * @param PostRepository $postRepository
+     * @return Response
+     * @throws ORMException
+     * @throws OptimisticLockException
+     */
+    public function delete($id, PostRepository $postRepository): Response
+    {
+        $post = $postRepository->find($id);
+        $postRepository->getEntityManager()->remove($post);
+        $postRepository->getEntityManager()->flush();
+
+        $this->addFlash('success', 'Post was removed.');
+        return $this->redirectToRoute('post.index');
+    }
+
 }
