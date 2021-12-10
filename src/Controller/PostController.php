@@ -43,23 +43,23 @@ class PostController extends AbstractController
         $post = new Post;
         $form = $this->createForm(PostType::class, $post);
         $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid()) {
+        if ($form->isSubmitted()) {
             $entityManager = $postRepository->getEntityManager();
             /** @var UploadedFile $file */
             $file = $form->get('attachment')->getData();
             if ($file) {
-                $filename = md5(uniqid()).'.'.$file->guessClientExtension();
+                $filename = md5(uniqid()).'.'.$file->guessExtension();
                 $file->move(
                     $this->getParameter('uploads_dir'),
                     $filename
                 );
                 $post->setImage($filename);
+                $entityManager->persist($post);
+                $entityManager->flush();
             }
-            $entityManager->persist($post);
-            $entityManager->flush();
-
             return $this->redirectToRoute('post.index');
         }
+
         return $this->render('post/create.html.twig', [
             'form' => $form->createView()
         ]);
