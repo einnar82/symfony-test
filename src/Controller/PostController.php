@@ -8,6 +8,7 @@ use App\Repository\PostRepository;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -42,15 +43,23 @@ class PostController extends AbstractController
         $post = new Post;
         $form = $this->createForm(PostType::class, $post);
         $form->handleRequest($request);
-
         if ($form->isSubmitted() && $form->isValid()) {
             $entityManager = $postRepository->getEntityManager();
+            /** @var UploadedFile $file */
+            $file = $form->get('attachment')->getData();
+            if ($file) {
+                $filename = md5(uniqid()).'.'.$file->guessClientExtension();
+                $file->move(
+                    $this->getParameter('uploads_dir'),
+                    $filename
+                );
+                $post->setImage($filename);
+            }
             $entityManager->persist($post);
             $entityManager->flush();
 
             return $this->redirectToRoute('post.index');
         }
-
         return $this->render('post/create.html.twig', [
             'form' => $form->createView()
         ]);

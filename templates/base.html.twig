@@ -30,6 +30,11 @@
                 <li class="nav-item">
                     <a class="nav-link" href="{{ path('custom', {name: 'someone'}) }}">Greet someone</a>
                 </li>
+                {% if is_granted('ROLE_USER') %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ path('app_logout') }}">Logout</a>
+                </li>
+                {% endif %}
             </ul>
             </div>
         </div>
