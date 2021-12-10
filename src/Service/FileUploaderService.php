@@ -2,11 +2,15 @@
 
 namespace App\Service;
 
+use Symfony\Component\HttpFoundation\File\Exception\FileException;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 class FileUploaderService
 {
-    private $targetDirectory;
+    /**
+     * @var string
+     */
+    private string $targetDirectory;
 
     /**
      * @param $targetDirectory
@@ -32,7 +36,10 @@ class FileUploaderService
         return $filename;
     }
 
-    public function getTargetDirectory()
+    /**
+     * @return string
+     */
+    public function getTargetDirectory(): string
     {
         return $this->targetDirectory;
     }
