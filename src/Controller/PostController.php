@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\Post;
 use App\Form\PostType;
 use App\Repository\PostRepository;
+use App\Service\FileUploaderService;
 use Doctrine\ORM\OptimisticLockException;
 use Doctrine\ORM\ORMException;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -38,7 +39,7 @@ class PostController extends AbstractController
      * @return Response
      * @throws ORMException
      */
-    public function create(Request $request, PostRepository $postRepository): Response
+    public function create(Request $request, PostRepository $postRepository, FileUploaderService $fileUploaderService): Response
     {
         $post = new Post;
         $form = $this->createForm(PostType::class, $post);
@@ -48,11 +49,7 @@ class PostController extends AbstractController
             /** @var UploadedFile $file */
             $file = $form->get('attachment')->getData();
             if ($file) {
-                $filename = md5(uniqid()).'.'.$file->guessExtension();
-                $file->move(
-                    $this->getParameter('uploads_dir'),
-                    $filename
-                );
+                $filename = $fileUploaderService->upload($file);
                 $post->setImage($filename);
                 $entityManager->persist($post);
                 $entityManager->flush();
